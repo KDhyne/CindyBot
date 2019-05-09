@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27428.2005
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KDhyna_Bot", "KDhyna_Bot2\KDhyna_Bot.csproj", "{D0959674-4F0F-4422-9C5F-A86EA21D9655}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CindyBot", "KDhyna_Bot2\CindyBot.csproj", "{D0959674-4F0F-4422-9C5F-A86EA21D9655}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
