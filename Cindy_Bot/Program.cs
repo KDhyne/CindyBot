@@ -1,6 +1,9 @@
 ﻿using Discord;
+using Discord.Commands;
 using Discord.WebSocket;
+using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace CindyBot
@@ -16,42 +19,30 @@ namespace CindyBot
         {
             var _config = new DiscordSocketConfig { MessageCacheSize = 100 };
             _client = new DiscordSocketClient(_config);
-            
-            var token = Environment.GetEnvironmentVariable("DiscordToken");
-            await _client.LoginAsync(TokenType.Bot, token);
-            await _client.StartAsync();
 
-            _client.Log += Log;
-            _client.MessageReceived += MessageReceived;
-            _client.MessageUpdated += MessageUpdated;
-
-            _client.Ready += () =>
+            using (var services = ConfigureServices())
             {
-                Console.WriteLine("Bot is connected");
-                return Task.CompletedTask;
-            };
+                var _client = services.GetRequiredService<DiscordSocketClient>();
 
-            // Block this task until the program is closed.
-            await Task.Delay(-1);
+                _client.Log += LogAsync;
+                services.GetRequiredService<CommandService>().Log += LogAsync;
+
+                // Tokens are secret and therefore loaded from the Environment Variables!
+                await _client.LoginAsync(TokenType.Bot, Environment.GetEnvironmentVariable("DiscordToken"));
+                await _client.StartAsync();
+
+                // Here we intialize the logic required to register our commands.
+                await services.GetRequiredService<CommandHandler>().InstallCommandsAsync();
+                
+                // Block this task until the program is closed.
+                await Task.Delay(-1);
+            }
         }
 
-        private Task Log(LogMessage msg)
+        private Task LogAsync(LogMessage pLog)
         {
-            Console.WriteLine(msg.ToString());
-
+            Console.WriteLine(pLog.ToString());
             return Task.CompletedTask;
-        }
-
-        private async Task MessageReceived(SocketMessage pMessage)
-        {
-            if (pMessage.Content == "!ping")
-            {
-                await pMessage.Channel.SendMessageAsync("Pong!");
-            }
-            else if (pMessage.Content == "!Hello")
-            {
-                await pMessage.Channel.SendMessageAsync($"Hello {pMessage.Author.Username}!");
-            }
         }
 
         private async Task MessageUpdated(Cacheable<IMessage, ulong> pBefore, SocketMessage pAfter, ISocketMessageChannel pChannel)
@@ -71,6 +62,16 @@ namespace CindyBot
         {
             var lGuild = (pChannel as SocketGuildChannel)?.Guild;
             return lGuild.Owner;
+        }
+
+        private ServiceProvider ConfigureServices()
+        {
+            return new ServiceCollection()
+                .AddSingleton<DiscordSocketClient>()
+                .AddSingleton<CommandService>()
+                .AddSingleton<CommandHandler>()
+                .AddSingleton<HttpClient>()
+                .BuildServiceProvider();
         }
     }
 }
